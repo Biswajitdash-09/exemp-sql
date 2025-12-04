@@ -1,0 +1,44 @@
+{
+  "name": "e62ff9cf-391b-489a-9cc5-750692616bed",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=18 <21"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
+    "aws-sdk": "^2.1692.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "daisyui": "^5.0.43",
+    "date-fns": "latest",
+    "express-rate-limit": "^8.2.1",
+    "framer-motion": "^12.23.16",
+    "helmet": "^8.1.0",
+    "html2canvas": "latest",
+    "joi": "^18.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
+    "lucide-react": "^0.525.0",
+    "multer": "^2.0.2",
+    "next": "15.3.4",
+    "nodemailer": "^7.0.11",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-is": "latest",
+    "recharts": "latest",
+    "sendgrid": "^5.2.3",
+    "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4"
+  }
+}

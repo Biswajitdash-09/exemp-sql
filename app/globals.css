@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap');
+
+@import "tailwindcss";
+
+/* Custom theme with new color palette */
+@plugin "daisyui" {
+  themes: all;
+}
+
+@theme inline {
+  /* Custom Color Variables */
+  --color-primary-green: #007A3D;
+  --color-darker-green: #016B34;
+  --color-blue-cta: #004F9E;
+  --color-light-blue-hover: #0A6BD6;
+  --color-muted-blue-grey: #E6F3EF;
+  --color-white: #ffffff;
+  
+  /* DaisyUI Color Overrides */
+  --p: var(--color-primary-green);
+  --pf: var(--color-darker-green);
+  --s: var(--color-blue-cta);
+  --sf: var(--color-light-blue-hover);
+  --a: var(--color-primary-green);
+  --af: var(--color-darker-green);
+  --n: #64748b;
+  --nf: #475569;
+  --bc: var(--color-white);
+  --bcl: #f8fafc;
+}
+
+/* Base Styles */
+body {
+  background: var(--color-white);
+  color: #1f2937;
+  font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: var(--color-primary-green) !important;
+  border-color: var(--color-primary-green) !important;
+  color: white !important;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-darker-green) !important;
+  border-color: var(--color-darker-green) !important;
+}
+
+.btn-primary:active, .btn-primary:focus {
+  background-color: var(--color-darker-green) !important;
+  border-color: var(--color-darker-green) !important;
+}
+
+/* Tab Button Styles */
+.tab {
+  background-color: var(--color-blue-cta) !important;
+  border-color: var(--color-blue-cta) !important;
+  color: white !important;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+}
+
+.tab:hover {
+  background-color: var(--color-light-blue-hover) !important;
+  border-color: var(--color-light-blue-hover) !important;
+}
+
+.tab-active {
+  background-color: var(--color-light-blue-hover) !important;
+  border-color: var(--color-light-blue-hover) !important;
+}
+
+/* Header Styles */
+.navbar {
+  background-color: var(--color-primary-green) !important;
+  border-bottom: 1px solid var(--color-darker-green);
+}
+
+.navbar * {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Card and Container Styles */
+.card {
+  background-color: var(--color-white) !important;
+  border-color: #e5e7eb !important;
+}
+
+.bg-base-200 {
+  background-color: var(--color-muted-blue-grey) !important;
+}
+
+/* Form Elements */
+.input, .select, .textarea {
+  border-color: #d1d5db !important;
+  font-family: 'Lato', sans-serif;
+}
+
+.input:focus, .select:focus, .textarea:focus {
+  border-color: var(--color-primary-green) !important;
+  outline-color: var(--color-primary-green) !important;
+}
+
+/* Step Indicator */
+.step-primary {
+  color: var(--color-primary-green) !important;
+}
+
+.step-primary:before {
+  background-color: var(--color-primary-green) !important;
+}
+
+/* Status Colors */
+.text-success {
+  color: var(--color-primary-green) !important;
+}
+
+.bg-success {
+  background-color: var(--color-primary-green) !important;
+}
+
+.border-success {
+  border-color: var(--color-primary-green) !important;
+}
+
+.text-info {
+  color: var(--color-blue-cta) !important;
+}
+
+.bg-info {
+  background-color: var(--color-blue-cta) !important;
+}
+
+.border-info {
+  border-color: var(--color-blue-cta) !important;
+}
+
+/* Hover States */
+.card:hover {
+  border-color: var(--color-primary-green) !important;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 122, 61, 0.15);
+}
+
+/* Loading Spinner */
+.loading {
+  color: var(--color-primary-green) !important;
+}
+
+/* Table Styles */
+.table th {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  color: #374151;
+  background-color: var(--color-muted-blue-grey);
+}
+
+.table td {
+  font-family: 'Lato', sans-serif;
+}
+
+/* Badge Styles */
+.badge {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+}
+
+/* Custom Theme Definition */
+@plugin "daisyui/theme" {
+  name: "verification-portal";
+  default: true;
+  
+  --color-primary: var(--color-primary-green);
+  --color-primary-focus: var(--color-darker-green);
+  --color-primary-content: #ffffff;
+  
+  --color-secondary: var(--color-blue-cta);
+  --color-secondary-focus: var(--color-light-blue-hover);
+  --color-secondary-content: #ffffff;
+  
+  --color-neutral: #64748b;
+  --color-neutral-focus: #475569;
+  --color-neutral-content: #ffffff;
+  
+  --color-base-100: var(--color-white);
+  --color-base-200: var(--color-muted-blue-grey);
+  --color-base-300: #f1f5f9;
+  
+  --color-info: var(--color-blue-cta);
+  --color-success: var(--color-primary-green);
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+}
