@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import AppealDetail from '@/components/admin/AppealDetail';
 import Icon from '@/components/Icon';
+import { use } from 'react';
 
 export default function AppealDetailPage({ params }) {
-  const { id } = params;
+  const { id } = use(params);
 
   return (
-    <motion.div 
+    <motion.div
       className="w-full max-w-4xl mx-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -28,7 +29,7 @@ export default function AppealDetailPage({ params }) {
           Review the details of the appeal and take action.
         </p>
       </div>
-      
+
       <AppealDetail appealId={id} />
     </motion.div>
   );
