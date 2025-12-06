@@ -48,7 +48,7 @@ export default function AppealDetail({ appealId }) {
     setIsUpdating(true);
     try {
       const response = await appealAPI.respondToAppeal(appealId, newStatus, hrResponse);
-      
+
       if (response.success) {
         setAppeal(prev => ({ ...prev, status: newStatus, hrResponse }));
         showToast(`Appeal has been ${newStatus}.`, 'success');
@@ -106,7 +106,7 @@ export default function AppealDetail({ appealId }) {
           <div className="flex justify-between items-start mb-6">
             <div>
               <h2 className="card-title text-2xl">Appeal ID</h2>
-              <p className="font-mono text-sm text-base-content/70 mt-1">{appeal.id}</p>
+              <p className="font-mono text-sm text-base-content/70 mt-1">{appeal.appealId}</p>
             </div>
             <span className={`badge ${getStatusBadge(appeal.status)} badge-lg capitalize`}>
               {appeal.status}
@@ -132,7 +132,9 @@ export default function AppealDetail({ appealId }) {
               <Icon name="Shield" className="w-6 h-6 text-primary" />
               <div>
                 <p className="font-semibold">Verifier Info</p>
-                <p className="text-base-content/80 font-mono text-xs">ID: {appeal.verifierId}</p>
+                <p className="text-base-content/80 font-mono text-xs">
+                  {appeal.verifierInfo?.companyName || 'Unknown'} ({appeal.verifierInfo?.email || 'N/A'})
+                </p>
               </div>
             </div>
           </div>
@@ -144,7 +146,7 @@ export default function AppealDetail({ appealId }) {
               <Icon name="MessageSquare" className="w-5 h-5" />
               Verifier's Comments
             </h3>
-            <p className="bg-base-200 p-4 rounded-lg whitespace-pre-wrap text-base-content/90">{appeal.comments}</p>
+            <p className="bg-base-200 p-4 rounded-lg whitespace-pre-wrap text-base-content/90">{appeal.comments || appeal.appealReason || 'No comments provided'}</p>
           </div>
 
           {appeal.file && (
@@ -177,7 +179,7 @@ export default function AppealDetail({ appealId }) {
           {appeal.status === 'pending' && (
             <>
               <div className="divider"></div>
-              
+
               {!showResponseForm ? (
                 <div className="card-actions justify-end mt-4">
                   <button
@@ -208,7 +210,7 @@ export default function AppealDetail({ appealId }) {
                   <h3 className="text-lg font-semibold mb-4">
                     HR Response - {selectedAction === 'approved' ? 'Approve Appeal' : 'Reject Appeal'}
                   </h3>
-                  
+
                   <div className="form-control mb-4">
                     <label className="label">
                       <span className="label-text font-semibold">Response Details</span>
@@ -221,7 +223,7 @@ export default function AppealDetail({ appealId }) {
                       required
                     ></textarea>
                   </div>
-                  
+
                   <div className="card-actions justify-end gap-2">
                     <button
                       className="btn btn-ghost"
