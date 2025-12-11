@@ -140,9 +140,12 @@ const AppealModal = ({ isOpen, onClose, showToast, verificationId, verifierId, v
             <div className="space-y-2">
               {mismatchedFields.map((field, index) => (
                 <div key={index} className="bg-base-100 p-3 rounded border border-base-300">
-                  <div className="font-medium text-base-content/80 capitalize">{field.field.replace(/([A-Z])/g, ' $1').trim()}</div>
+                  <div className="font-medium text-base-content/80 capitalize">{(field.field || field.label || 'Unknown Field').replace(/([A-Z])/g, ' $1').trim()}</div>
                   <div className="text-sm text-base-content/60 mt-1">
                     <span className="font-medium">Your entry:</span> {field.verifierValue || 'Not provided'}
+                  </div>
+                  <div className="text-sm text-base-content/60 mt-1">
+                    <span className="font-medium">Company records:</span> {field.companyValue || 'Not available'}
                   </div>
                   <div className="text-sm text-error mt-1">
                     <span className="font-medium">Status:</span> Mismatch detected
