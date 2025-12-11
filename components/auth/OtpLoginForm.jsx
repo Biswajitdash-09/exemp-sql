@@ -232,7 +232,7 @@ const OtpLoginForm = ({ onLoginSuccess }) => {
                         </div>
                         <label className="label">
                             <span className="label-text-alt text-base-content/60">
-                                OTP expires in 2 minutes
+                                OTP expires in 5 minutes
                             </span>
                         </label>
                     </div>
