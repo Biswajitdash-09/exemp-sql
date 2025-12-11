@@ -90,7 +90,6 @@ const AppealModal = ({ isOpen, onClose, showToast, verificationId, verifierId, v
         // Reset form and close modal
         setComments('');
         setFile(null);
-        setVerificationData(null);
         setMismatchedFields([]);
 
         // Clear file input visually
