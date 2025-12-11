@@ -125,7 +125,7 @@ export default function AppealDetail({ appealId }) {
               <Icon name="Calendar" className="w-6 h-6 text-primary" />
               <div>
                 <p className="font-semibold">Date Submitted</p>
-                <p className="text-base-content/80">{new Date(appeal.createdAt).toLocaleString()}</p>
+                <p className="text-base-content/80">{new Date(appeal.createdAt).toLocaleDateString('en-GB')}, {new Date(appeal.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
             </div>
             <div className="col-span-1 md:col-span-2 flex items-center gap-3 p-3 bg-base-200/50 rounded-lg">
@@ -162,7 +162,7 @@ export default function AppealDetail({ appealId }) {
                   <p className="whitespace-pre-wrap text-base-content/90">{appeal.hrResponse}</p>
                   {appeal.reviewedAt && (
                     <p className="text-xs text-base-content/60 mt-2">
-                      Reviewed on: {new Date(appeal.reviewedAt).toLocaleString()}
+                      Reviewed on: {new Date(appeal.reviewedAt).toLocaleDateString('en-GB')}
                     </p>
                   )}
                 </div>

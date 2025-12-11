@@ -92,7 +92,7 @@ export default function AppealList() {
         appeal.employeeId,
         appeal.verifierInfo?.companyName || 'N/A',
         appeal.status,
-        new Date(appeal.createdAt || appeal.submittedAt).toLocaleDateString()
+        new Date(appeal.createdAt || appeal.submittedAt).toLocaleDateString('en-GB')
       ];
       csvContent += row.map(v => `"${v}"`).join(',') + '\n';
     });
@@ -144,7 +144,7 @@ export default function AppealList() {
                 <td className="text-sm">
                   {appeal.verifierInfo ? appeal.verifierInfo.companyName : 'N/A'}
                 </td>
-                <td>{new Date(appeal.createdAt || appeal.submittedAt).toLocaleDateString()}</td>
+                <td>{new Date(appeal.createdAt || appeal.submittedAt).toLocaleDateString('en-GB')}</td>
                 <td>
                   <span className={`badge ${getStatusBadge(appeal.status)} capitalize`}>
                     {appeal.status}
