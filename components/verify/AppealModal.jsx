@@ -5,32 +5,20 @@ import { motion } from 'framer-motion';
 import apiService, { appealAPI, handleError } from '@/lib/api.service.js';
 import Icon from '@/components/Icon';
 
-const AppealModal = ({ isOpen, onClose, showToast, verificationId, verifierId }) => {
+const AppealModal = ({ isOpen, onClose, showToast, verificationId, verifierId, verificationResult }) => {
   const [comments, setComments] = useState('');
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [verificationData, setVerificationData] = useState(null);
   const [mismatchedFields, setMismatchedFields] = useState([]);
 
+  // Extract mismatched fields from verification result when modal opens
   useEffect(() => {
-    if (isOpen && verificationId) {
-      fetchVerificationData();
+    if (isOpen && verificationResult) {
+      const mismatches = verificationResult.comparisonResults?.filter(result => !result.isMatch) || [];
+      setMismatchedFields(mismatches);
+      console.log('AppealModal: Found', mismatches.length, 'mismatched fields');
     }
-  }, [isOpen, verificationId]);
-
-  const fetchVerificationData = async () => {
-    try {
-      // Get verification details to show mismatched fields
-      const response = await apiService.verification.getVerificationDetails(verificationId);
-      if (response.success && response.data) {
-        setVerificationData(response.data);
-        const mismatches = response.data.comparisonResults?.filter(result => !result.isMatch) || [];
-        setMismatchedFields(mismatches);
-      }
-    } catch (error) {
-      console.error('Failed to fetch verification details:', error);
-    }
-  };
+  }, [isOpen, verificationResult]);
 
   const handleFileChange = (e) => {
     if (e.target.files[0]) {

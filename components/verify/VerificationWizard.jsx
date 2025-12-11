@@ -566,6 +566,7 @@ const VerificationWizard = () => {
         showToast={showToast}
         verificationId={verificationResult?.verificationId}
         verifierId={verifier?.id}
+        verificationResult={verificationResult}
       />
     </div>
   );
