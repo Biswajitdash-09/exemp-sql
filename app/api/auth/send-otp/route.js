@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { generateOTP, storeOTP, canRequestOTP, OTP_EXPIRY_MINUTES } from '@/lib/services/otp.service';
 import { sendOTPEmail } from '@/lib/services/emailService';
-import { sendOTPEmailResend } from '@/lib/services/resendService';
 
 /**
  * Send OTP to verifier email
  * POST /api/auth/send-otp
  * Body: { email: string }
  * 
- * Uses Resend if RESEND_API_KEY is configured, otherwise falls back to SendGrid
+ * Optimized for fast response - uses fire-and-forget pattern for email sending
  */
 export async function POST(request) {
     try {
@@ -55,7 +54,7 @@ export async function POST(request) {
         // Generate OTP
         const otp = generateOTP();
 
-        // Store OTP
+        // Store OTP in database
         const storeResult = await storeOTP(email, otp);
         if (!storeResult.success) {
             return NextResponse.json({
@@ -64,38 +63,11 @@ export async function POST(request) {
             }, { status: 500 });
         }
 
-        // Send OTP via email - try Resend first, then SendGrid
-        let emailSent = false;
+        // ⚡ OPTIMIZATION: Send email asynchronously (fire-and-forget)
+        // This allows immediate API response without waiting for email delivery
+        sendEmailAsync(email, otp);
 
-        // Try Resend first (if configured)
-        if (process.env.RESEND_API_KEY) {
-            try {
-                console.log(`[RESEND] Attempting to send OTP to ${email}`);
-                await sendOTPEmailResend(email, otp);
-                console.log(`[RESEND] OTP sent successfully to ${email}`);
-                emailSent = true;
-            } catch (resendError) {
-                console.error('[RESEND] Error:', resendError.message);
-            }
-        }
-
-        // Try SendGrid as fallback
-        if (!emailSent && process.env.SENDGRID_API_KEY) {
-            try {
-                console.log(`[SENDGRID] Attempting to send OTP to ${email}`);
-                await sendOTPEmail(email, otp);
-                console.log(`[SENDGRID] OTP sent successfully to ${email}`);
-                emailSent = true;
-            } catch (sendgridError) {
-                console.error('[SENDGRID] Error:', sendgridError.message);
-            }
-        }
-
-        // Log OTP to console for development/fallback
-        if (!emailSent) {
-            console.log(`[DEV] Email not sent. OTP for ${email}: ${otp}`);
-        }
-
+        // Return success immediately - don't wait for email to send
         return NextResponse.json({
             success: true,
             message: `OTP sent to ${email}. Valid for ${OTP_EXPIRY_MINUTES} minutes.`,
@@ -110,5 +82,34 @@ export async function POST(request) {
             message: 'Failed to send OTP. Please try again.',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         }, { status: 500 });
+    }
+}
+
+/**
+ * Send email asynchronously with timeout handling
+ * This runs in the background and doesn't block the API response
+ */
+async function sendEmailAsync(email, otp) {
+    try {
+        if (!process.env.SENDGRID_API_KEY) {
+            console.warn(`[OTP] SendGrid not configured. OTP for ${email}: ${otp}`);
+            return;
+        }
+
+        console.log(`[OTP] Sending OTP to ${email}...`);
+
+        // Set a 5-second timeout for email sending
+        const emailPromise = sendOTPEmail(email, otp);
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Email timeout')), 5000)
+        );
+
+        await Promise.race([emailPromise, timeoutPromise]);
+        console.log(`[OTP] ✓ Successfully sent to ${email}`);
+
+    } catch (error) {
+        // Log error but don't fail the request - email is not critical for OTP flow
+        console.error(`[OTP] ✗ Failed to send to ${email}:`, error.message);
+        console.log(`[OTP] Fallback - OTP for ${email}: ${otp}`);
     }
 }
