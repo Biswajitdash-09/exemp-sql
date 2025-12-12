@@ -67,14 +67,25 @@ export async function POST(request) {
 
     // Handle file upload if present
     let uploadedFileUrl = null;
+    console.log('[APPEAL] File upload check:', {
+      hasFile: !!supportingDocument,
+      fileSize: supportingDocument?.size || 0,
+      fileName: supportingDocument?.name || 'none'
+    });
+
     if (supportingDocument && supportingDocument.size > 0) {
       try {
+        console.log('[APPEAL] Starting file upload to Vercel Blob...');
         const uploadResult = await uploadFileToS3(supportingDocument, `appeals/${verificationRecord.employeeId}`);
         uploadedFileUrl = uploadResult.s3Url;
+        console.log('[APPEAL] ✅ File uploaded successfully:', uploadedFileUrl);
       } catch (uploadError) {
-        console.error('File upload error:', uploadError);
+        console.error('[APPEAL] ❌ File upload error:', uploadError.message);
+        console.error('[APPEAL] Full error:', uploadError);
         // Continue without file, but log the error
       }
+    } else {
+      console.log('[APPEAL] No file provided or file is empty');
     }
 
     // Generate appeal ID
