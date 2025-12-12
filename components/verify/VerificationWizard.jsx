@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-// TEMPORARY: Use debug version for troubleshooting
-import apiService from "@/lib/api.service.debug.js";
+import apiService from "@/lib/api.service.js";
 import { reportAPI, handleError } from "@/lib/api.service.js";
 import Icon from "@/components/Icon";
 import Toast from "@/components/ui/Toast";
