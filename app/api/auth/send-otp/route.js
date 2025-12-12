@@ -91,17 +91,20 @@ export async function POST(request) {
  */
 async function sendEmailAsync(email, otp) {
     try {
-        if (!process.env.SENDGRID_API_KEY) {
-            console.warn(`[OTP] SendGrid not configured. OTP for ${email}: ${otp}`);
+        // Check if any email provider is configured
+        const hasEmailProvider = process.env.BREVO_API_KEY || process.env.SENDGRID_API_KEY || process.env.RESEND_API_KEY;
+
+        if (!hasEmailProvider) {
+            console.warn(`[OTP] No email provider configured. OTP for ${email}: ${otp}`);
             return;
         }
 
         console.log(`[OTP] Sending OTP to ${email}...`);
 
-        // Set a 5-second timeout for email sending
+        // Set a 10-second timeout for email sending (increased for reliability)
         const emailPromise = sendOTPEmail(email, otp);
         const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Email timeout')), 5000)
+            setTimeout(() => reject(new Error('Email timeout after 10s')), 10000)
         );
 
         await Promise.race([emailPromise, timeoutPromise]);
