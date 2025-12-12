@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateOTP, storeOTP, canRequestOTP, OTP_EXPIRY_MINUTES } from '@/lib/services/otp.service';
-import { sendOTPEmail } from '@/lib/services/emailService';
-import { sendOTPEmailSMTP } from '@/lib/services/smtpService';
+import sgMail from '@sendgrid/mail';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -9,7 +8,7 @@ const isDev = process.env.NODE_ENV === 'development';
  * Send OTP to verifier email
  * POST /api/auth/send-otp
  * 
- * Uses SMTP locally, Brevo API in production
+ * Uses SendGrid API for reliable email delivery
  */
 export async function POST(request) {
     try {
@@ -65,10 +64,10 @@ export async function POST(request) {
             }, { status: 500 });
         }
 
-        // Send email - use different methods for dev vs production
-        sendEmailAsync(email, otp);
+        // Send email via SendGrid
+        await sendEmailViaSendGrid(email, otp);
 
-        // Return success immediately
+        // Return success
         return NextResponse.json({
             success: true,
             message: `OTP sent to ${email}. Valid for ${OTP_EXPIRY_MINUTES} minutes.`,
@@ -87,29 +86,79 @@ export async function POST(request) {
 }
 
 /**
- * Send email - SMTP for local, Brevo API for production
- * Vercel blocks SMTP connections, so we must use API in production
+ * Send OTP email via SendGrid API
  */
-async function sendEmailAsync(email, otp) {
+async function sendEmailViaSendGrid(email, otp) {
+    const apiKey = process.env.SENDGRID_API_KEY;
+
+    if (!apiKey) {
+        console.error('[OTP] ❌ SENDGRID_API_KEY not configured!');
+        throw new Error('SendGrid API key not configured');
+    }
+
+    sgMail.setApiKey(apiKey);
+
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@example.com';
+    const companyName = process.env.COMPANY_NAME || 'Ex-Employee Verification Portal';
+
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .header h1 { color: white; margin: 0; font-size: 24px; }
+                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                .otp-box { background: #667eea; color: white; font-size: 32px; font-weight: bold; padding: 20px; text-align: center; border-radius: 8px; letter-spacing: 8px; margin: 20px 0; }
+                .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>${companyName}</h1>
+                </div>
+                <div class="content">
+                    <p>Hello,</p>
+                    <p>Your one-time password (OTP) for login is:</p>
+                    <div class="otp-box">${otp}</div>
+                    <p>This OTP is valid for <strong>5 minutes</strong>.</p>
+                    <p>If you didn't request this OTP, please ignore this email.</p>
+                    <p>Best regards,<br>${companyName} Team</p>
+                </div>
+                <div class="footer">
+                    <p>This is an automated message. Please do not reply to this email.</p>
+                    <p>© ${new Date().getFullYear()} ${companyName}. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+
+    const msg = {
+        to: email,
+        from: {
+            email: fromEmail,
+            name: companyName
+        },
+        subject: `Your OTP Code: ${otp}`,
+        html: htmlContent,
+        text: `Your OTP is: ${otp}. Valid for 5 minutes.`
+    };
+
+    console.log(`[OTP] Sending OTP to ${email} via SendGrid...`);
+
     try {
-        if (isDev && process.env.SMTP_USER && process.env.SMTP_PASS) {
-            // Use SMTP locally (better for testing)
-            console.log(`[OTP] Sending OTP to ${email} via SMTP (local)`);
-            const result = await sendOTPEmailSMTP(email, otp);
-            console.log(`[OTP] ✅ Email sent via SMTP, messageId: ${result.messageId}`);
-        } else {
-            // Use Brevo API in production (works with Vercel)
-            console.log(`[OTP] Sending OTP to ${email} via Brevo API (production)`);
-
-            if (!process.env.BREVO_API_KEY) {
-                console.error(`[OTP] ❌ BREVO_API_KEY not configured!`);
-                return;
-            }
-
-            const result = await sendOTPEmail(email, otp);
-            console.log(`[OTP] ✅ Email sent via Brevo API`);
-        }
+        const response = await sgMail.send(msg);
+        console.log(`[OTP] ✅ SendGrid email sent successfully to ${email}`);
+        return response;
     } catch (error) {
-        console.error(`[OTP] ❌ Failed to send email to ${email}:`, error.message);
+        console.error(`[OTP] ❌ SendGrid error:`, error.message);
+        if (error.response) {
+            console.error(`[OTP] SendGrid response:`, error.response.body);
+        }
+        throw error;
     }
 }
