@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateOTP, storeOTP, canRequestOTP, OTP_EXPIRY_MINUTES } from '@/lib/services/otp.service';
+import { sendOTPEmail } from '@/lib/services/emailService';
 import { sendOTPEmailSMTP } from '@/lib/services/smtpService';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -7,9 +8,8 @@ const isDev = process.env.NODE_ENV === 'development';
 /**
  * Send OTP to verifier email
  * POST /api/auth/send-otp
- * Body: { email: string }
  * 
- * Uses SMTP for reliable email delivery
+ * Uses SMTP locally, Brevo API in production
  */
 export async function POST(request) {
     try {
@@ -65,7 +65,7 @@ export async function POST(request) {
             }, { status: 500 });
         }
 
-        // Send email via SMTP (fire-and-forget)
+        // Send email - use different methods for dev vs production
         sendEmailAsync(email, otp);
 
         // Return success immediately
@@ -87,25 +87,29 @@ export async function POST(request) {
 }
 
 /**
- * Send email via SMTP with logging
+ * Send email - SMTP for local, Brevo API for production
+ * Vercel blocks SMTP connections, so we must use API in production
  */
 async function sendEmailAsync(email, otp) {
-    console.log(`[OTP] Sending OTP to ${email} via SMTP`);
-
     try {
-        // Check if SMTP is configured
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-            console.error(`[OTP] ❌ CRITICAL: SMTP credentials not configured!`);
-            console.error(`[OTP] Set SMTP_USER and SMTP_PASS in environment variables`);
-            return;
+        if (isDev && process.env.SMTP_USER && process.env.SMTP_PASS) {
+            // Use SMTP locally (better for testing)
+            console.log(`[OTP] Sending OTP to ${email} via SMTP (local)`);
+            const result = await sendOTPEmailSMTP(email, otp);
+            console.log(`[OTP] ✅ Email sent via SMTP, messageId: ${result.messageId}`);
+        } else {
+            // Use Brevo API in production (works with Vercel)
+            console.log(`[OTP] Sending OTP to ${email} via Brevo API (production)`);
+
+            if (!process.env.BREVO_API_KEY) {
+                console.error(`[OTP] ❌ BREVO_API_KEY not configured!`);
+                return;
+            }
+
+            const result = await sendOTPEmail(email, otp);
+            console.log(`[OTP] ✅ Email sent via Brevo API`);
         }
-
-        // Call the SMTP email service
-        const result = await sendOTPEmailSMTP(email, otp);
-        console.log(`[OTP] ✅ Email sent via SMTP to ${email}, messageId: ${result.messageId}`);
-
     } catch (error) {
-        // ALWAYS log email failures
-        console.error(`[OTP] ❌ SMTP Failed to send email to ${email}:`, error.message);
+        console.error(`[OTP] ❌ Failed to send email to ${email}:`, error.message);
     }
 }
