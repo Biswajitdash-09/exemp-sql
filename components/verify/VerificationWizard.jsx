@@ -345,7 +345,7 @@ const VerificationWizard = () => {
                   </select>
                   <label className="label pt-1">
                     <span className="label-text-alt text-base-content/60 text-xs">
-                      The company whose ex-employee you need to verify
+                      Provide the name of the company for which verification is needed
                     </span>
                   </label>
                 </div>
