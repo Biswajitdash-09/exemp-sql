@@ -3,12 +3,12 @@ import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
 import { findEmployeeById } from '@/lib/mongodb.data.service';
 
 /**
- * Validate Employee ID and Name match before proceeding to next step
+ * Validate that Employee ID exists before proceeding to next step
  * POST /api/verify/validate-employee
  * Body: { employeeId: string, name: string }
  * 
- * Note: This validates both Employee ID exists AND Name matches.
- * No blocking mechanism - verifier can retry as many times as needed.
+ * Note: This ONLY checks if the Employee ID exists in the database.
+ * Name and other field comparisons are shown in the final results page.
  */
 export async function POST(request) {
     try {
@@ -54,7 +54,7 @@ export async function POST(request) {
 
         const normalizedEmployeeId = employeeId.toUpperCase().trim();
 
-        // Find employee in MongoDB
+        // Find employee in MongoDB - ONLY check if employee ID exists
         const employee = await findEmployeeById(normalizedEmployeeId);
 
         if (!employee) {
@@ -64,27 +64,11 @@ export async function POST(request) {
             }, { status: 404 });
         }
 
-        // Compare names (case-insensitive, trim whitespace)
-        const submittedName = name.toLowerCase().trim();
-        const officialName = employee.name.toLowerCase().trim();
-
-        // Check for exact match or partial match (handles variations like "S Sathish" vs "S. Sathish")
-        const namesMatch =
-            submittedName === officialName ||
-            submittedName.replace(/\./g, '') === officialName.replace(/\./g, '') ||
-            submittedName.split(' ').join('') === officialName.split(' ').join('');
-
-        if (!namesMatch) {
-            return NextResponse.json({
-                success: false,
-                message: 'Employee ID and Name do not match. Please check and try again.'
-            }, { status: 400 });
-        }
-
-        // Validation successful
+        // Employee ID exists - proceed to next step
+        // Name and all other field comparisons will be shown in the final results
         return NextResponse.json({
             success: true,
-            message: 'Employee validated successfully'
+            message: 'Employee ID verified. Proceed to enter employment details.'
         }, { status: 200 });
 
     } catch (error) {
