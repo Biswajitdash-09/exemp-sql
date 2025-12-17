@@ -3,12 +3,12 @@ import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
 import { findEmployeeById } from '@/lib/mongodb.data.service';
 
 /**
- * Validate Employee ID exists before proceeding to next step
+ * Validate Employee ID and Name match before proceeding to next step
  * POST /api/verify/validate-employee
  * Body: { employeeId: string, name: string }
  * 
- * Note: This only checks if the employee ID exists.
- * Name matching will be shown in the final comparison results.
+ * Note: This validates both Employee ID exists AND Name matches.
+ * No blocking mechanism - verifier can retry as many times as needed.
  */
 export async function POST(request) {
     try {
@@ -54,7 +54,7 @@ export async function POST(request) {
 
         const normalizedEmployeeId = employeeId.toUpperCase().trim();
 
-        // Find employee in MongoDB - just check if exists
+        // Find employee in MongoDB
         const employee = await findEmployeeById(normalizedEmployeeId);
 
         if (!employee) {
@@ -64,11 +64,27 @@ export async function POST(request) {
             }, { status: 404 });
         }
 
-        // Employee exists - allow proceeding to next step
-        // Name matching will be compared and shown in the final results
+        // Compare names (case-insensitive, trim whitespace)
+        const submittedName = name.toLowerCase().trim();
+        const officialName = employee.name.toLowerCase().trim();
+
+        // Check for exact match or partial match (handles variations like "S Sathish" vs "S. Sathish")
+        const namesMatch =
+            submittedName === officialName ||
+            submittedName.replace(/\./g, '') === officialName.replace(/\./g, '') ||
+            submittedName.split(' ').join('') === officialName.split(' ').join('');
+
+        if (!namesMatch) {
+            return NextResponse.json({
+                success: false,
+                message: 'Employee ID and Name do not match. Please check and try again.'
+            }, { status: 400 });
+        }
+
+        // Validation successful
         return NextResponse.json({
             success: true,
-            message: 'Employee found. Proceed to enter employment details for verification.'
+            message: 'Employee validated successfully'
         }, { status: 200 });
 
     } catch (error) {
@@ -81,4 +97,5 @@ export async function POST(request) {
         }, { status: 500 });
     }
 }
+
 
