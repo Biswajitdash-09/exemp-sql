@@ -29,6 +29,7 @@ const VerificationWizard = () => {
   const [isAppealModalOpen, setIsAppealModalOpen] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloadLoading, setIsDownloadLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [verifier, setVerifier] = useState(null);
   const router = useRouter();
@@ -119,6 +120,33 @@ const VerificationWizard = () => {
     setToast({ ...toast, show: false });
   };
 
+
+
+  const handleDownloadReport = async () => {
+    if (!verificationResult?.verificationId) {
+      console.error("No verification ID found for report generation");
+      return;
+    }
+
+    setIsDownloadLoading(true);
+    try {
+      const response = await reportAPI.generateReport(verificationResult.verificationId);
+
+      if (response && response.success && response.data && response.data.pdfUrl) {
+        window.open(response.data.pdfUrl, '_blank');
+        showToast('Report generated successfully!', 'success');
+      } else {
+        console.error('Report generation failed:', response);
+        showToast(response?.message || 'Failed to generate report', 'error');
+      }
+    } catch (error) {
+      console.error("Report generation error:", error);
+      showToast('Failed to generate report. Please try again.', 'error');
+    } finally {
+      setIsDownloadLoading(false);
+    }
+  };
+
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -129,14 +157,19 @@ const VerificationWizard = () => {
       showToast('Please provide consent to proceed.', 'error');
       return;
     }
-    // Validation only for BGV agencies
-    if (step === 1 && verifier?.isBgvAgency && !formData.verifyingForCompany) {
-      showToast('Please select the company for which verification is needed.', 'error');
-      return;
-    }
-    if (step === 2 && (!formData.employeeId || !formData.name)) {
-      showToast('Please fill in all required fields.', 'error');
-      return;
+    if (step === 2) {
+      if (!formData.employeeId || !formData.name) {
+        showToast('Please fill in all required fields.', 'error');
+        return;
+      }
+      if (verifier?.isBgvAgency && !formData.verifyingForCompany) {
+        showToast('Please select the company for which verification is needed.', 'error');
+        return;
+      }
+      // Auto-fill entityName for BGV agencies
+      if (verifier?.isBgvAgency && formData.verifyingForCompany) {
+        setFormData(prev => ({ ...prev, entityName: formData.verifyingForCompany }));
+      }
     }
 
     // Validate Employee ID and Name match before proceeding to step 3
@@ -154,7 +187,8 @@ const VerificationWizard = () => {
           },
           body: JSON.stringify({
             employeeId: formData.employeeId.trim(),
-            name: formData.name.trim()
+            name: formData.name.trim(),
+            entityName: verifier?.isBgvAgency ? formData.verifyingForCompany : undefined
           })
         });
 
@@ -231,37 +265,7 @@ const VerificationWizard = () => {
     setVerificationResult(null);
   };
 
-  const handleDownloadReport = async () => {
-    try {
-      showToast('Generating PDF report...', 'info');
 
-      // Use simple client-side PDF generation
-      const { generateVerificationPDF } = await import('@/lib/services/simplePdfService');
-
-      const result = generateVerificationPDF(
-        {
-          comparisonResults: verificationResult.comparisonResults,
-          overallStatus: verificationResult.overallStatus,
-          matchScore: verificationResult.matchScore
-        },
-        {
-          employeeId: verificationResult.employeeData.employeeId,
-          name: verificationResult.employeeData.name,
-          entityName: verificationResult.employeeData.entityName,
-          designation: verificationResult.employeeData.designation
-        }
-      );
-
-      if (result.success) {
-        showToast('Report downloaded successfully!', 'success');
-      } else {
-        showToast('Failed to generate PDF report', 'error');
-      }
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      showToast(`Failed to generate PDF report: ${error.message}`, 'error');
-    }
-  };
 
   const handleSendEmail = async () => {
     try {
@@ -310,61 +314,13 @@ const VerificationWizard = () => {
             <div className="card-body p-6 md:p-8">
               <div className="text-center mb-6">
                 <Icon name="FileCheck2" className="w-14 h-14 text-primary mx-auto mb-3" />
-                <h2 className="card-title text-xl md:text-2xl justify-center">Step 1: Verifier Details & Consent</h2>
-                <p className="mt-2 text-sm text-base-content/70">
-                  Select the company for which you need verification and provide consent
-                </p>
+                <h2 className="card-title text-xl md:text-2xl justify-center">Step 1: Consent</h2>
               </div>
 
               <div className="space-y-5">
-                {/* Verifier's Company Name (Read-only) */}
-                <div className="form-control">
-                  <label className="label pb-1">
-                    <span className="label-text font-semibold">Your Company</span>
-                  </label>
-                  <div className="input input-bordered bg-base-200 flex items-center text-sm">
-                    {formData.companyName || 'Your Company'}
-                  </div>
-                </div>
 
-                {/* Only show 'Verification For' if verifier is a BGV Agency */}
-                {verifier?.isBgvAgency && (
-                  <div className="form-control">
-                    <label className="label pb-1">
-                      <span className="label-text font-semibold">Verification For <span className="text-error">*</span></span>
-                    </label>
-                    <select
-                      name="verifyingForCompany"
-                      value={formData.verifyingForCompany}
-                      onChange={handleFormChange}
-                      className="select select-bordered w-full"
-                      required
-                    >
-                      <option value="">Select company for verification</option>
-                      {VERIFICATION_COMPANIES.map((company) => (
-                        <option key={company.id} value={company.id}>
-                          {company.name}
-                        </option>
-                      ))}
-                    </select>
-                    <label className="label pt-1">
-                      <span className="label-text-alt text-base-content/60 text-xs">
-                        Provide the name of the company for which verification is needed
-                      </span>
-                    </label>
-                  </div>
-                )}
 
-                {
-                  formData.verifyingForCompany && (
-                    <div className="alert alert-info text-sm py-3">
-                      <Icon name="Info" className="w-4 h-4 shrink-0" />
-                      <span>
-                        You are verifying employment for: <strong>{VERIFICATION_COMPANIES.find(c => c.id === formData.verifyingForCompany)?.name}</strong>
-                      </span>
-                    </div>
-                  )
-                }
+
 
                 <div className="form-control">
                   <label className="label cursor-pointer p-4 border rounded-lg hover:bg-base-200 gap-3 justify-start">
@@ -410,6 +366,28 @@ const VerificationWizard = () => {
               </div>
 
               <div className="space-y-4">
+                {/* BGV Agency: Verification For Selection */}
+                {verifier?.isBgvAgency && (
+                  <div className="form-control">
+                    <label className="label"><span className="label-text font-semibold">Verification For <span className="text-error">*</span></span></label>
+                    <div className="tooltip" data-tip="Select the company you represent or are verifying on behalf of">
+                      <select
+                        name="verifyingForCompany"
+                        value={formData.verifyingForCompany}
+                        onChange={handleFormChange}
+                        className="select select-bordered w-full"
+                        required
+                      >
+                        <option value="">Select company for verification</option>
+                        {VERIFICATION_COMPANIES.map((company) => (
+                          <option key={company.id} value={company.id}>
+                            {company.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
                 <div className="form-control">
                   <label className="label"><span className="label-text font-semibold">Employee ID</span></label>
                   <input
@@ -465,12 +443,15 @@ const VerificationWizard = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="form-control">
-                  <label className="label"><span className="label-text font-semibold">Entity Name</span></label>
-                  <select name="entityName" value={formData.entityName} onChange={handleFormChange} className="select select-bordered" required>
-                    <option value="">Select Entity</option>
-                    <option value="TVSCSHIB">TVSCSHIB</option>
-                    <option value="HIB">HIB</option>
-                  </select>
+                  <label className="label"><span className="label-text font-semibold">Date of Joining</span></label>
+                  <input
+                    type="date"
+                    name="dateOfJoining"
+                    value={formData.dateOfJoining}
+                    onChange={handleFormChange}
+                    className="input input-bordered"
+                    required
+                  />
                 </div>
 
                 <div className="form-control">
@@ -484,18 +465,9 @@ const VerificationWizard = () => {
                     className="input input-bordered"
                     required
                   />
-                </div>
-
-                <div className="form-control">
-                  <label className="label"><span className="label-text font-semibold">Date of Joining</span></label>
-                  <input
-                    type="date"
-                    name="dateOfJoining"
-                    value={formData.dateOfJoining}
-                    onChange={handleFormChange}
-                    className="input input-bordered"
-                    required
-                  />
+                  <label className="label">
+                    <span className="label-text-alt text-xs text-gray-500">Note: This field is case-sensitive</span>
+                  </label>
                 </div>
 
                 <div className="form-control">
@@ -510,7 +482,7 @@ const VerificationWizard = () => {
                   />
                 </div>
 
-                <div className="form-control md:col-span-2">
+                <div className="form-control">
                   <label className="label"><span className="label-text font-semibold">Exit Reason</span></label>
                   <select name="exitReason" value={formData.exitReason} onChange={handleFormChange} className="select select-bordered" required>
                     <option value="">Select Exit Reason</option>
@@ -519,6 +491,15 @@ const VerificationWizard = () => {
                     <option value="Retired">Retired</option>
                     <option value="Absconding">Absconding</option>
                     <option value="Contract Completed">Contract Completed</option>
+                  </select>
+                </div>
+
+                <div className="form-control md:col-span-2">
+                  <label className="label"><span className="label-text font-semibold">Entity Name</span></label>
+                  <select name="entityName" value={formData.entityName} onChange={handleFormChange} className="select select-bordered" required>
+                    <option value="">Select Entity</option>
+                    <option value="TVSCSHIB">TVSCSHIB</option>
+                    <option value="HIB">HIB</option>
                   </select>
                 </div>
               </div>
@@ -547,7 +528,7 @@ const VerificationWizard = () => {
                 <div className="text-center mb-6">
                   <Icon name="ShieldCheck" className="w-16 h-16 text-primary mx-auto mb-4" />
                   <h2 className="card-title text-2xl justify-center">Verification Results</h2>
-                  <p className="text-base-content/70">Comparison for Employee ID: <strong>{verificationResult.employeeData.employeeId}</strong></p>
+                  <p className="text-base-content/70">Employee ID: <strong>{verificationResult.employeeData.employeeId}</strong></p>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -585,6 +566,10 @@ const VerificationWizard = () => {
                       <Icon name="FileWarning" className="w-4 h-4" /> Raise Appeal
                     </button>
                   )}
+
+                  <button className="btn" style={{ backgroundColor: '#4F46E5', color: 'white', fontFamily: "'Montserrat', sans-serif" }} onClick={handleDownloadReport} disabled={isDownloadLoading}>
+                    {isDownloadLoading ? <span className="loading loading-spinner"></span> : <><Icon name="Download" className="w-4 h-4" /> Download Report</>}
+                  </button>
                   <button className="btn" style={{ backgroundColor: '#E6F3EF', color: '#007A3D', fontFamily: "'Montserrat', sans-serif" }} onClick={handleStartOver}>
                     <Icon name="RotateCw" className="w-4 h-4" /> Start New Verification
                   </button>
@@ -607,7 +592,7 @@ const VerificationWizard = () => {
       {toast.show && <Toast message={toast.message} type={toast.type} onClose={closeToast} />}
 
       <ul className="steps w-full mb-12">
-        <li className={`step ${step >= 1 ? 'text-primary-green' : 'text-gray-400'}`}>Company & Consent</li>
+        <li className={`step ${step >= 1 ? 'text-primary-green' : 'text-gray-400'}`}>Consent</li>
         <li className={`step ${step >= 2 ? 'text-primary-green' : 'text-gray-400'}`}>Employee Details</li>
         <li className={`step ${step >= 3 ? 'text-primary-green' : 'text-gray-400'}`}>Employment Details</li>
         <li className={`step ${step >= 4 ? 'text-primary-green' : 'text-gray-400'}`}>Results</li>

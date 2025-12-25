@@ -39,7 +39,7 @@ export async function POST(request) {
 
         // Parse request body
         const body = await request.json();
-        const { employeeId, name } = body;
+        const { employeeId, name, entityName } = body;
 
         // Validate required fields
         if (!employeeId || !name) {
@@ -70,6 +70,17 @@ export async function POST(request) {
                 success: false,
                 message: 'Employee ID and Name do not match. Please check the details and try again.'
             }, { status: 400 });
+        }
+
+        // Validate Entity/Company if provided (for BGV case)
+        if (entityName) {
+            const employeeEntity = employee.entityName;
+            if (entityName !== employeeEntity) {
+                return NextResponse.json({
+                    success: false,
+                    message: `Employee verification failed for the selected company. This employee does not belong to ${entityName}.`
+                }, { status: 400 });
+            }
         }
 
         // Both Employee ID and Name match - proceed to next step
