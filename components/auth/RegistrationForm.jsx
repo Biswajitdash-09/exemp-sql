@@ -9,6 +9,7 @@ const RegistrationForm = ({ showToast }) => {
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isBgvAgency, setIsBgvAgency] = useState(null); // null, true, or false
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const router = useRouter();
@@ -26,12 +27,12 @@ const RegistrationForm = ({ showToast }) => {
       setEmailError('Please enter a valid email address');
       return false;
     }
-    
+
     if (PERSONAL_EMAIL_DOMAINS.includes(domain)) {
       setEmailError('Personal email domains are not allowed. Please use your company email address.');
       return false;
     }
-    
+
     setEmailError('');
     return true;
   };
@@ -50,7 +51,7 @@ const RegistrationForm = ({ showToast }) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!companyName || !email || !password) {
+    if (!companyName || !email || !password || isBgvAgency === null) {
       showToast("All fields are required.", "error");
       setIsLoading(false);
       return;
@@ -64,7 +65,7 @@ const RegistrationForm = ({ showToast }) => {
 
     try {
       // use default export's `auth` object
-      const response = await apiService.auth.register(companyName, email, password);
+      const response = await apiService.auth.register(companyName, email, password, isBgvAgency);
 
       if (response?.success) {
         showToast("Registration successful! Redirecting to login...", "success");
@@ -106,6 +107,34 @@ const RegistrationForm = ({ showToast }) => {
             Your company's official name
           </span>
         </label>
+      </div>
+
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text font-semibold">Are you a background verification agency? <span className="text-error">*</span></span>
+        </label>
+        <div className="flex gap-6 mt-1">
+          <label className="label cursor-pointer justify-start gap-2 border p-3 rounded-lg hover:bg-base-200 flex-1">
+            <input
+              type="radio"
+              name="isBgvAgency"
+              className="radio radio-primary"
+              checked={isBgvAgency === true}
+              onChange={() => setIsBgvAgency(true)}
+            />
+            <span className="label-text">Yes</span>
+          </label>
+          <label className="label cursor-pointer justify-start gap-2 border p-3 rounded-lg hover:bg-base-200 flex-1">
+            <input
+              type="radio"
+              name="isBgvAgency"
+              className="radio radio-primary"
+              checked={isBgvAgency === false}
+              onChange={() => setIsBgvAgency(false)}
+            />
+            <span className="label-text">No</span>
+          </label>
+        </div>
       </div>
 
       <div className="form-control">

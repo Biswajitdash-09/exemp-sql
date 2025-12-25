@@ -129,7 +129,8 @@ const VerificationWizard = () => {
       showToast('Please provide consent to proceed.', 'error');
       return;
     }
-    if (step === 1 && !formData.verifyingForCompany) {
+    // Validation only for BGV agencies
+    if (step === 1 && verifier?.isBgvAgency && !formData.verifyingForCompany) {
       showToast('Please select the company for which verification is needed.', 'error');
       return;
     }
@@ -316,6 +317,7 @@ const VerificationWizard = () => {
               </div>
 
               <div className="space-y-5">
+                {/* Verifier's Company Name (Read-only) */}
                 <div className="form-control">
                   <label className="label pb-1">
                     <span className="label-text font-semibold">Your Company</span>
@@ -325,39 +327,44 @@ const VerificationWizard = () => {
                   </div>
                 </div>
 
-                <div className="form-control">
-                  <label className="label pb-1">
-                    <span className="label-text font-semibold">Verification For <span className="text-error">*</span></span>
-                  </label>
-                  <select
-                    name="verifyingForCompany"
-                    value={formData.verifyingForCompany}
-                    onChange={handleFormChange}
-                    className="select select-bordered w-full"
-                    required
-                  >
-                    <option value="">Select company for verification</option>
-                    {VERIFICATION_COMPANIES.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.name}
-                      </option>
-                    ))}
-                  </select>
-                  <label className="label pt-1">
-                    <span className="label-text-alt text-base-content/60 text-xs">
-                      Provide the name of the company for which verification is needed
-                    </span>
-                  </label>
-                </div>
-
-                {formData.verifyingForCompany && (
-                  <div className="alert alert-info text-sm py-3">
-                    <Icon name="Info" className="w-4 h-4 shrink-0" />
-                    <span>
-                      You are verifying employment for: <strong>{VERIFICATION_COMPANIES.find(c => c.id === formData.verifyingForCompany)?.name}</strong>
-                    </span>
+                {/* Only show 'Verification For' if verifier is a BGV Agency */}
+                {verifier?.isBgvAgency && (
+                  <div className="form-control">
+                    <label className="label pb-1">
+                      <span className="label-text font-semibold">Verification For <span className="text-error">*</span></span>
+                    </label>
+                    <select
+                      name="verifyingForCompany"
+                      value={formData.verifyingForCompany}
+                      onChange={handleFormChange}
+                      className="select select-bordered w-full"
+                      required
+                    >
+                      <option value="">Select company for verification</option>
+                      {VERIFICATION_COMPANIES.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {company.name}
+                        </option>
+                      ))}
+                    </select>
+                    <label className="label pt-1">
+                      <span className="label-text-alt text-base-content/60 text-xs">
+                        Provide the name of the company for which verification is needed
+                      </span>
+                    </label>
                   </div>
                 )}
+
+                {
+                  formData.verifyingForCompany && (
+                    <div className="alert alert-info text-sm py-3">
+                      <Icon name="Info" className="w-4 h-4 shrink-0" />
+                      <span>
+                        You are verifying employment for: <strong>{VERIFICATION_COMPANIES.find(c => c.id === formData.verifyingForCompany)?.name}</strong>
+                      </span>
+                    </div>
+                  )
+                }
 
                 <div className="form-control">
                   <label className="label cursor-pointer p-4 border rounded-lg hover:bg-base-200 gap-3 justify-start">
@@ -372,7 +379,7 @@ const VerificationWizard = () => {
                     </span>
                   </label>
                 </div>
-              </div>
+              </div >
 
               <div className="mt-6">
                 <button
@@ -384,8 +391,8 @@ const VerificationWizard = () => {
                   Next <Icon name="ArrowRight" className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-          </motion.div>
+            </div >
+          </motion.div >
         );
 
       case 2:
@@ -600,10 +607,10 @@ const VerificationWizard = () => {
       {toast.show && <Toast message={toast.message} type={toast.type} onClose={closeToast} />}
 
       <ul className="steps w-full mb-12">
-        <li className={`step ${step >= 1 ? 'text-[#007A3D]' : 'text-gray-400'} `} style={{ color: step >= 1 ? '#007A3D' : '#d1d5db' }}>Company & Consent</li>
-        <li className={`step ${step >= 2 ? 'text-[#007A3D]' : 'text-gray-400'} `} style={{ color: step >= 2 ? '#007A3D' : '#d1d5db' }}>Employee Details</li>
-        <li className={`step ${step >= 3 ? 'text-[#007A3D]' : 'text-gray-400'} `} style={{ color: step >= 3 ? '#007A3D' : '#d1d5db' }}>Employment Details</li>
-        <li className={`step ${step >= 4 ? 'text-[#007A3D]' : 'text-gray-400'} `} style={{ color: step >= 4 ? '#007A3D' : '#d1d5db' }}>Results</li>
+        <li className={`step ${step >= 1 ? 'text-primary-green' : 'text-gray-400'}`}>Company & Consent</li>
+        <li className={`step ${step >= 2 ? 'text-primary-green' : 'text-gray-400'}`}>Employee Details</li>
+        <li className={`step ${step >= 3 ? 'text-primary-green' : 'text-gray-400'}`}>Employment Details</li>
+        <li className={`step ${step >= 4 ? 'text-primary-green' : 'text-gray-400'}`}>Results</li>
       </ul>
 
       {renderStepContent()}

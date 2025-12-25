@@ -18,7 +18,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const { companyName, email, password } = value;
+    const { companyName, email, password, isBgvAgency } = value;
 
     // Check if verifier already exists
     const existingVerifier = await findVerifierByEmail(email.toLowerCase());
@@ -39,7 +39,8 @@ export async function POST(request) {
       email: email.toLowerCase(),
       password: hashedPassword,
       isEmailVerified: true, // Auto-verify for demo purposes
-      isActive: true
+      isActive: true,
+      isBgvAgency: isBgvAgency || false
     });
 
     // Convert Mongoose document to plain object
@@ -68,7 +69,8 @@ export async function POST(request) {
       id: verifierObj._id.toString(),
       email: verifierObj.email,
       companyName: verifierObj.companyName,
-      role: 'verifier'
+      role: 'verifier',
+      isBgvAgency: verifierObj.isBgvAgency || false
     });
 
     // Return response without sensitive data
@@ -76,6 +78,7 @@ export async function POST(request) {
       id: verifierObj._id.toString(),
       companyName: verifierObj.companyName,
       email: verifierObj.email,
+      isBgvAgency: verifierObj.isBgvAgency,
       isEmailVerified: verifierObj.isEmailVerified,
       createdAt: verifierObj.createdAt
     };
