@@ -169,6 +169,9 @@ const VerificationWizard = () => {
       // Auto-fill entityName for BGV agencies
       if (verifier?.isBgvAgency && formData.verifyingForCompany) {
         setFormData(prev => ({ ...prev, entityName: formData.verifyingForCompany }));
+      } else if (!formData.entityName) {
+        showToast('Please select the Entity Name.', 'error');
+        return;
       }
     }
 
@@ -188,7 +191,7 @@ const VerificationWizard = () => {
           body: JSON.stringify({
             employeeId: formData.employeeId.trim(),
             name: formData.name.trim(),
-            entityName: verifier?.isBgvAgency ? formData.verifyingForCompany : undefined
+            entityName: verifier?.isBgvAgency ? formData.verifyingForCompany : formData.entityName
           })
         });
 
@@ -208,7 +211,7 @@ const VerificationWizard = () => {
       setIsValidating(false);
     }
 
-    if (step === 3 && (!formData.entityName || !formData.dateOfJoining || !formData.dateOfLeaving || !formData.designation || !formData.exitReason)) {
+    if (step === 3 && (!formData.dateOfJoining || !formData.dateOfLeaving || !formData.designation || !formData.exitReason)) {
       showToast('Please fill in all required fields.', 'error');
       return;
     }
@@ -413,6 +416,22 @@ const VerificationWizard = () => {
                     required
                   />
                 </div>
+
+                <div className="form-control">
+                  <label className="label"><span className="label-text font-semibold">Entity Name</span></label>
+                  <select
+                    name="entityName"
+                    value={formData.entityName}
+                    onChange={handleFormChange}
+                    className="select select-bordered"
+                    required
+                    disabled={verifier?.isBgvAgency}
+                  >
+                    <option value="">Select Entity</option>
+                    <option value="TVSCSHIB">TVSCSHIB</option>
+                    <option value="HIB">HIB</option>
+                  </select>
+                </div>
               </div>
 
               <div className="card-actions justify-between mt-6">
@@ -494,14 +513,7 @@ const VerificationWizard = () => {
                   </select>
                 </div>
 
-                <div className="form-control md:col-span-2">
-                  <label className="label"><span className="label-text font-semibold">Entity Name</span></label>
-                  <select name="entityName" value={formData.entityName} onChange={handleFormChange} className="select select-bordered" required>
-                    <option value="">Select Entity</option>
-                    <option value="TVSCSHIB">TVSCSHIB</option>
-                    <option value="HIB">HIB</option>
-                  </select>
-                </div>
+
               </div>
 
               <div className="card-actions justify-between mt-6">
@@ -513,7 +525,7 @@ const VerificationWizard = () => {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </motion.div >
         );
 
       case 4:
