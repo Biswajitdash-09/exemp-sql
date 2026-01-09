@@ -428,9 +428,9 @@ const VerificationWizard = () => {
                     disabled={verifier?.isBgvAgency}
                   >
                     <option value="">Select Entity</option>
-                    <option value="TVS Credit Services Limited">TVS Credit Services Limited</option>
+                    <option value="TVSCSHIB">TVS Credit Services Limited</option>
                     <option value="Harita Receivables and Collection Services LLP">Harita Receivables and Collection Services LLP</option>
-                    <option value="Harita Insurance Broking LLP">Harita Insurance Broking LLP</option>
+                    <option value="HIB">Harita Insurance Broking LLP</option>
                   </select>
                 </div>
               </div>
