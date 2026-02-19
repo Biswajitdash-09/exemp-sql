@@ -1,7 +1,6 @@
 "use client";
 import Script from "next/script";
 
-import { useEffect } from 'react';
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";

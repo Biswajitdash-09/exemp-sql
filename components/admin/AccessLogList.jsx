@@ -173,7 +173,7 @@ const AccessLogList = () => {
                             </tr>
                         ) : (
                             logs.map((log) => (
-                                <tr key={log._id} className="hover">
+                                <tr key={log.id} className="hover">
                                     <td className="text-xs font-mono whitespace-nowrap">
                                         {formatDate(log.timestamp)}
                                     </td>
