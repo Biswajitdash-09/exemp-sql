@@ -4,7 +4,7 @@ import {
   findVerificationRecord,
   updateVerificationRecord,
   findEmployeeById
-} from '@/lib/mongodb.data.service';
+} from '@/lib/data.service';
 import { generateVerificationReportPDF } from '@/lib/services/pdfService';
 import { sendVerificationReportEmail } from '@/lib/services/emailService';
 

@@ -77,7 +77,7 @@ export async function GET(request) {
                 comparison,
                 recommendation,
                 recentLogs: recentLogs.map(log => ({
-                    id: log._id,
+                    id: log.id,
                     provider: log.provider,
                     emailType: log.emailType,
                     recipient: log.recipient?.substring(0, 3) + '****',

@@ -6,10 +6,10 @@ import {
   getAppeals,
   findVerifierById,
   generateSequentialId
-} from '@/lib/mongodb.data.service';
-import Appeal from '@/lib/models/Appeal.js';
+} from '@/lib/data.service';
 import { uploadFileToS3 } from '@/lib/services/fileService';
 import { sendAppealNotificationEmail } from '@/lib/services/emailService';
+import prisma from '@/lib/prisma.js';
 
 export async function POST(request) {
   try {
@@ -89,7 +89,7 @@ export async function POST(request) {
     }
 
     // Generate appeal ID
-    const appealId = await generateSequentialId('APP', Appeal);
+    const appealId = await generateSequentialId('APP', 'appeal');
 
     // Create appeal
     const appeal = await addAppeal({

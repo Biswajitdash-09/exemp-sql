@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { verifyOTP } from '@/lib/services/otp.service';
 import { generateToken } from '@/lib/auth';
-import connectDB from '@/lib/db/mongodb';
-import Verifier from '@/lib/models/Verifier';
-import { logAccess } from '@/lib/mongodb.data.service';
+import prisma from '@/lib/prisma.js';
+import { addVerifier, updateVerifier, logAccess } from '@/lib/data.service';
 
 /**
  * Verify OTP and login/register verifier
@@ -43,30 +42,27 @@ export async function POST(request) {
             }, { status: 400 });
         }
 
-        // Connect to database
-        await connectDB();
-
         // Check if verifier exists
-        let verifier = await Verifier.findOne({ email: email.toLowerCase() });
+        let verifier = await prisma.verifier.findFirst({
+            where: { email: email.toLowerCase() }
+        });
+
+        const isNewUser = !verifier;
 
         if (!verifier) {
             // Auto-register new verifier
             const emailDomain = email.split('@')[1];
             const defaultCompanyName = companyName || emailDomain.split('.')[0].toUpperCase();
 
-            verifier = new Verifier({
+            verifier = await addVerifier({
                 email: email.toLowerCase(),
                 companyName: defaultCompanyName,
                 isActive: true,
-                createdAt: new Date(),
-                lastLogin: new Date()
+                isEmailVerified: true
             });
-
-            await verifier.save();
         } else {
             // Update last login
-            verifier.lastLogin = new Date();
-            await verifier.save();
+            verifier = await updateVerifier(verifier.id, { lastLoginAt: new Date() });
         }
 
         // Log success
@@ -79,13 +75,13 @@ export async function POST(request) {
             userAgent: request.headers.get('user-agent') || 'unknown',
             metadata: {
                 companyName: verifier.companyName,
-                isNewUser: !verifier.lastLoginAt // Rough check if new user
+                isNewUser: isNewUser
             }
         });
 
         // Generate JWT token
         const token = generateToken({
-            id: verifier._id.toString(),
+            id: verifier.id,
             email: verifier.email,
             companyName: verifier.companyName,
             role: 'verifier'
@@ -97,7 +93,7 @@ export async function POST(request) {
             data: {
                 token,
                 verifier: {
-                    id: verifier._id.toString(),
+                    id: verifier.id,
                     email: verifier.email,
                     companyName: verifier.companyName
                 }

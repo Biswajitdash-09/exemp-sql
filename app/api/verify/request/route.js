@@ -8,8 +8,7 @@ import {
   findVerificationRecord,
   getVerificationRecordsByVerifier,
   generateSequentialId
-} from '@/lib/mongodb.data.service';
-import VerificationRecord from '@/lib/models/VerificationRecord.js';
+} from '@/lib/data.service';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -76,7 +75,7 @@ export async function POST(request) {
     const fnfStatus = calculateFnFStatus(employee.exitReason, employee.dateOfLeaving);
 
     // Generate verification ID
-    const verificationId = await generateSequentialId('VER', VerificationRecord);
+    const verificationId = await generateSequentialId('VER', 'verificationRecord');
 
     // Create verification record
     const verificationRecord = await addVerificationRecord({

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAccessLogs } from '@/lib/mongodb.data.service';
+import { getAccessLogs } from '@/lib/data.service';
 import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';

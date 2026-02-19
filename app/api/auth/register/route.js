@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { schemas } from '@/lib/validation';
 import { generateToken } from '@/lib/auth';
-import { findVerifierByEmail, addVerifier } from '@/lib/mongodb.data.service';
+import { findVerifierByEmail, addVerifier } from '@/lib/data.service';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request) {
@@ -43,14 +43,11 @@ export async function POST(request) {
       isBgvAgency: isBgvAgency || false
     });
 
-    // Convert Mongoose document to plain object
-    const verifierObj = newVerifier.toObject ? newVerifier.toObject() : newVerifier;
-
     // Debug: Log the created verifier
     console.log('✅ New verifier created:', {
-      id: verifierObj._id.toString(),
-      email: verifierObj.email,
-      companyName: verifierObj.companyName
+      id: newVerifier.id,
+      email: newVerifier.email,
+      companyName: newVerifier.companyName
     });
 
     // Verify the verifier was actually saved
@@ -58,7 +55,7 @@ export async function POST(request) {
     console.log('🔍 Verification check - Saved verifier found:', savedVerifier ? 'YES' : 'NO');
     if (savedVerifier) {
       console.log('Saved verifier details:', {
-        id: savedVerifier._id.toString(),
+        id: savedVerifier.id,
         email: savedVerifier.email,
         hasPassword: !!savedVerifier.password
       });
@@ -66,16 +63,16 @@ export async function POST(request) {
 
     // Generate JWT token
     const token = generateToken({
-      id: verifierObj._id.toString(),
-      email: verifierObj.email,
-      companyName: verifierObj.companyName,
+      id: newVerifier.id,
+      email: newVerifier.email,
+      companyName: newVerifier.companyName,
       role: 'verifier',
-      isBgvAgency: verifierObj.isBgvAgency || false
+      isBgvAgency: newVerifier.isBgvAgency || false
     });
 
     // Return response without sensitive data
     const verifierResponse = {
-      id: verifierObj._id.toString(),
+      id: newVerifier.id,
       companyName: verifierObj.companyName,
       email: verifierObj.email,
       isBgvAgency: verifierObj.isBgvAgency,
@@ -86,7 +83,7 @@ export async function POST(request) {
     // Send welcome email (optional - will fail gracefully if not configured)
     try {
       const { sendWelcomeEmail } = await import('@/lib/services/emailService');
-      await sendWelcomeEmail(verifierObj);
+      await sendWelcomeEmail(newVerifier);
     } catch (emailError) {
       console.log('Welcome email not sent (email service not configured):', emailError.message);
     }

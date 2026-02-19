@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { schemas } from '@/lib/validation';
 import { generateToken } from '@/lib/auth';
-import { findAdminByUsername, updateAdminLastLogin, logAccess } from '@/lib/mongodb.data.service';
+import { findAdminByUsername, updateAdminLastLogin, logAccess } from '@/lib/data.service';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request) {
@@ -90,7 +90,7 @@ export async function POST(request) {
     }
 
     // Update last login time
-    await updateAdminLastLogin(admin._id.toString());
+    await updateAdminLastLogin(admin.id);
 
     // Log success
     await logAccess({
@@ -108,7 +108,7 @@ export async function POST(request) {
 
     // Generate JWT token
     const token = generateToken({
-      id: admin._id.toString(),
+      id: admin.id,
       username: admin.username,
       email: admin.email,
       fullName: admin.fullName,
@@ -118,7 +118,7 @@ export async function POST(request) {
 
     // Return response without sensitive data
     const adminResponse = {
-      id: admin._id.toString(),
+      id: admin.id,
       username: admin.username,
       email: admin.email,
       fullName: admin.fullName,

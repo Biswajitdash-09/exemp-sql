@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { schemas } from '@/lib/validation';
 import { generateToken } from '@/lib/auth';
-import { findVerifierByEmail, updateVerifier, logAccess } from '@/lib/mongodb.data.service';
+import { findVerifierByEmail, updateVerifier, logAccess } from '@/lib/data.service';
 import bcrypt from 'bcryptjs';
 
 // Test mode is controlled by environment variable - disabled in production
@@ -93,7 +93,7 @@ export async function POST(request) {
     }
 
     // Update last login time
-    const updatedVerifier = await updateVerifier(verifier._id.toString(), {
+    const updatedVerifier = await updateVerifier(verifier.id, {
       lastLoginAt: new Date()
     });
 
@@ -112,7 +112,7 @@ export async function POST(request) {
 
     // Generate JWT token
     const token = generateToken({
-      id: verifier._id.toString(),
+      id: verifier.id,
       email: verifier.email,
       companyName: verifier.companyName,
       role: 'verifier'
@@ -120,7 +120,7 @@ export async function POST(request) {
 
     // Return response without sensitive data
     const verifierResponse = {
-      id: verifier._id.toString(),
+      id: verifier.id,
       companyName: verifier.companyName,
       email: verifier.email,
       isEmailVerified: verifier.isEmailVerified,

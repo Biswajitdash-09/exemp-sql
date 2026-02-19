@@ -7,7 +7,7 @@ import {
   findVerifierById,
   findVerificationRecord,
   findEmployeeById
-} from '@/lib/mongodb.data.service';
+} from '@/lib/data.service';
 import { sendAppealResponseEmail } from '@/lib/services/emailService';
 
 export async function POST(request, { params }) {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { findVerifierById, clearVerifierNotifications } from '@/lib/data.service';
+import { findVerifierById, clearVerifierNotifications } from '@/lib/local.data.service';
 import Icon from '@/components/Icon';
 
 const Header = () => {

@@ -43,3 +43,12 @@ next-env.d.ts
 /.storage/
 .storage
 /public/uploads/
+
+/lib/generated/prisma
+
+# Environment files
+.env
+prisma/.env
+
+# Old node_modules backup
+/node_modules_old

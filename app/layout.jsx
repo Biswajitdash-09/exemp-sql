@@ -3,7 +3,7 @@ import Script from "next/script";
 
 import { useEffect } from 'react';
 import "./globals.css";
-import { initData } from "@/lib/data.service.js";
+import { initData } from "@/lib/local.data.service.js";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import InactivityWrapper from "@/components/auth/InactivityWrapper";

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
-import { getDashboardStats, findVerifierById } from '@/lib/mongodb.data.service';
+import { getDashboardStats, findVerifierById } from '@/lib/data.service';
 
 export async function GET(request) {
   try {

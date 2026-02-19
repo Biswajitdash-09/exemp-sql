@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
-import { findVerifierById, updateVerifier } from '@/lib/mongodb.data.service';
+import { findVerifierById, updateVerifier } from '@/lib/data.service';
 
 export async function GET(request) {
   try {
@@ -33,7 +33,7 @@ export async function GET(request) {
     }
 
     // Return verifier data (without password)
-    const { password, ...verifierData } = verifier.toObject ? verifier.toObject() : verifier;
+    const { password, ...verifierData } = verifier;
 
     return NextResponse.json({
       success: true,
@@ -97,8 +97,7 @@ export async function PUT(request) {
     }
 
     // Return updated data (without password)
-    const verifierObj = updatedVerifier.toObject ? updatedVerifier.toObject() : updatedVerifier;
-    const { password, ...verifierData } = verifierObj;
+    const { password, ...verifierData } = updatedVerifier;
 
     return NextResponse.json({
       success: true,

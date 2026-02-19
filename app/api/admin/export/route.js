@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { extractTokenFromHeader, verifyToken } from '@/lib/auth';
-import { getVerificationRecords, findVerifierById, getEmployees } from '@/lib/mongodb.data.service';
+import { getVerificationRecords, findVerifierById, getEmployees } from '@/lib/data.service';
 
 /**
  * Export verifications data as JSON (to be converted to Excel on client side)

@@ -6,7 +6,7 @@ import {
     incrementVerificationAttempt,
     resetVerificationAttempt,
     getBlockedMessage
-} from '@/lib/mongodb.data.service';
+} from '@/lib/data.service';
 
 /**
  * Validate that Employee ID and Name match before proceeding to next step
