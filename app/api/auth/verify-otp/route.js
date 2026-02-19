@@ -3,6 +3,7 @@ import { verifyOTP } from '@/lib/services/otp.service';
 import { generateToken } from '@/lib/auth';
 import prisma from '@/lib/prisma.js';
 import { addVerifier, updateVerifier, logAccess } from '@/lib/data.service';
+import bcrypt from 'bcryptjs';
 
 /**
  * Verify OTP and login/register verifier
@@ -54,9 +55,14 @@ export async function POST(request) {
             const emailDomain = email.split('@')[1];
             const defaultCompanyName = companyName || emailDomain.split('.')[0].toUpperCase();
 
+            // Create a hashed placeholder password
+            // This is required by the schema even for OTP users
+            const placeholderPassword = await bcrypt.hash(Math.random().toString(36), 10);
+
             verifier = await addVerifier({
                 email: email.toLowerCase(),
                 companyName: defaultCompanyName,
+                password: placeholderPassword,
                 isActive: true,
                 isEmailVerified: true
             });
@@ -101,12 +107,14 @@ export async function POST(request) {
         }, { status: 200 });
 
     } catch (error) {
-        console.error('Verify OTP error:', error);
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Verify OTP error details:', error);
+        }
 
         return NextResponse.json({
             success: false,
             message: 'Verification failed. Please try again.',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }, { status: 500 });
     }
 }
