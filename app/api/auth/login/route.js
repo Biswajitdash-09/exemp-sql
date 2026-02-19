@@ -66,7 +66,7 @@ export async function POST(request) {
     let isPasswordValid = false;
     if (verifier.password && (verifier.password.startsWith('$2') || verifier.password.startsWith('$2a') || verifier.password.startsWith('$2b'))) {
       // Hashed password - use bcrypt
-      isPasswordValid = await bcrypt.compare(normalPassword, verifier.password);
+      isPasswordValid = await bcrypt.compare(password, verifier.password);
     } else {
       // No valid password hash found - reject login
       if (process.env.NODE_ENV === 'development') {
