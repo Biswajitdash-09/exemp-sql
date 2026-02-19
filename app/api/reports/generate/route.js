@@ -105,7 +105,6 @@ export async function POST(request) {
     // Update verification record with PDF info
     await updateVerificationRecord(verificationId, {
       pdfReportUrl: pdfResult.s3Url,
-      pdfReportPath: pdfResult.s3Key,
       updatedAt: new Date()
     });
 
