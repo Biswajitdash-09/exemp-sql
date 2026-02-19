@@ -2,6 +2,7 @@ require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const pg = require('pg');
+const bcrypt = require('bcryptjs');
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -11,6 +12,11 @@ async function main() {
   console.log('🌱 Seeding database...');
   await prisma.$connect();
   console.log('📡 Connected to database');
+
+  // Helper to hash password
+  const hashPassword = async (password) => {
+    return await bcrypt.hash(password, 10);
+  };
 
   // 1. Seed Employees
   const employees = [
@@ -49,11 +55,14 @@ async function main() {
   }
 
   // 2. Seed Admins
+  const adminPassword = await hashPassword('admin123');
+  const hrPassword = await hashPassword('hr123');
+
   const admins = [
     {
       username: 'admin',
       email: 'admin@company.com',
-      password: 'admin123', // Note: In production, these should be hashed
+      password: adminPassword,
       fullName: 'System Administrator',
       role: 'super_admin',
       department: 'IT',
@@ -63,7 +72,7 @@ async function main() {
     {
       username: 'hr_manager',
       email: 'hr@company.com',
-      password: 'hr123',
+      password: hrPassword,
       fullName: 'HR Manager',
       role: 'hr_manager',
       department: 'Human Resources',
@@ -75,17 +84,19 @@ async function main() {
   for (const admin of admins) {
     await prisma.admin.upsert({
       where: { username: admin.username },
-      update: {},
+      update: { password: admin.password },
       create: admin,
     });
   }
 
   // 3. Seed Verifiers
+  const verifierPassword = await hashPassword('Aditya@12345');
+
   const verifiers = [
     {
       companyName: 'codemate.ai',
       email: 'adityamathan@codemateai.dev',
-      password: 'Aditya@12345',
+      password: verifierPassword,
       isEmailVerified: true,
       isActive: true,
       notifications: []
@@ -95,7 +106,7 @@ async function main() {
   for (const verifier of verifiers) {
     await prisma.verifier.upsert({
       where: { email: verifier.email },
-      update: {},
+      update: { password: verifier.password },
       create: verifier,
     });
   }
