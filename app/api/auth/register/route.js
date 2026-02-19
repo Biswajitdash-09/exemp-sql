@@ -73,11 +73,11 @@ export async function POST(request) {
     // Return response without sensitive data
     const verifierResponse = {
       id: newVerifier.id,
-      companyName: verifierObj.companyName,
-      email: verifierObj.email,
-      isBgvAgency: verifierObj.isBgvAgency,
-      isEmailVerified: verifierObj.isEmailVerified,
-      createdAt: verifierObj.createdAt
+      companyName: newVerifier.companyName,
+      email: newVerifier.email,
+      isBgvAgency: newVerifier.isBgvAgency,
+      isEmailVerified: newVerifier.isEmailVerified,
+      createdAt: newVerifier.createdAt
     };
 
     // Send welcome email (optional - will fail gracefully if not configured)
