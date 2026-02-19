@@ -3,18 +3,11 @@ import Script from "next/script";
 
 import { useEffect } from 'react';
 import "./globals.css";
-import { initData } from "@/lib/local.data.service.js";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import InactivityWrapper from "@/components/auth/InactivityWrapper";
 
 export default function RootLayout({ children }) {
-  useEffect(() => {
-    // This function checks if data exists in localStorage and seeds it 
-    // from a public JSON file if not. It runs only once on the client-side.
-    initData();
-  }, []);
-
   return (
     <html lang="en" data-theme="corporate" className="h-full">
       <head>

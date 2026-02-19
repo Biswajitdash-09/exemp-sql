@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { findVerifierById, clearVerifierNotifications } from '@/lib/local.data.service';
 import Icon from '@/components/Icon';
 
 const Header = () => {
@@ -26,22 +25,7 @@ const Header = () => {
       } else if (verifierSession) {
         try {
           const sessionData = JSON.parse(verifierSession);
-          
-          // Check if this is a test mode session or any valid session
-          if (sessionData.testMode || sessionData.email === 'testverifier@company.test' || sessionData.email === 'adityamathan@codemateai.dev') {
-            console.log('🧪 Test mode or known verifier session detected, using session data directly');
-            setUser({ type: 'verifier', ...sessionData });
-          } else {
-            // For production, try to find verifier in database
-            const fullVerifierData = findVerifierById(sessionData.id);
-            if (fullVerifierData) {
-              setUser({ type: 'verifier', ...fullVerifierData });
-            } else {
-              console.warn(`Verifier with ID ${sessionData.id} found in session but not in database. Using session data as fallback.`);
-              // Instead of clearing session, use the session data as fallback
-              setUser({ type: 'verifier', ...sessionData });
-            }
-          }
+          setUser({ type: 'verifier', ...sessionData });
         } catch (e) {
           console.error("Failed to parse verifier session", e);
           localStorage.removeItem('verifier_session');
@@ -83,7 +67,10 @@ const Header = () => {
   const handleClearNotifications = () => {
     if (!user || user.type !== 'verifier') return;
 
-    clearVerifierNotifications(user.id);
+    // Directly update the session in localStorage since we are removing the data service
+    const sessionData = JSON.parse(localStorage.getItem('verifier_session') || '{}');
+    sessionData.notifications = [];
+    localStorage.setItem('verifier_session', JSON.stringify(sessionData));
     
     setUser(prevUser => ({
       ...prevUser,
