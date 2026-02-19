@@ -18,11 +18,12 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const { username, password } = value;
+    const { username: rawUsername, password } = value;
+    const username = rawUsername.trim();
 
     // Debug logging only in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔐 Admin login attempt for:', username);
+      console.log(`🔐 Admin login attempt for: "${username}" (original: "${rawUsername}")`);
     }
 
     // Try to find admin by username

@@ -8,7 +8,7 @@ import OtpLoginForm from '@/components/auth/OtpLoginForm';
 import Icon from '@/components/Icon';
 
 export default function VerifierLoginPage() {
-  const [loginMethod, setLoginMethod] = useState('otp'); // 'password' or 'otp'
+  const [loginMethod, setLoginMethod] = useState('password'); // 'password' or 'otp'
 
   return (
     <motion.div

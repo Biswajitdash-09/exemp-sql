@@ -22,14 +22,15 @@ export async function POST(request) {
     }
 
     // Normal authentication flow
-    const { email: normalEmail, password: normalPassword } = value;
+    const { email: rawEmail, password } = value;
+    const email = rawEmail.toLowerCase().trim();
 
     // Debug logging only in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔐 Login attempt for:', normalEmail.toLowerCase());
+      console.log(`🔐 Login attempt for: "${email}" (original: "${rawEmail}")`);
     }
 
-    const verifier = await findVerifierByEmail(normalEmail.toLowerCase());
+    const verifier = await findVerifierByEmail(email);
 
     if (process.env.NODE_ENV === 'development') {
       console.log('🔍 Verifier lookup result:', verifier ? 'FOUND' : 'NOT FOUND');
