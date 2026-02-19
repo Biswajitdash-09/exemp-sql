@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { schemas } from '@/lib/validation';
 import { generateToken } from '@/lib/auth';
-import { findVerifierByEmail, addVerifier } from '@/lib/data.service';
+import { findVerifierByEmail, addVerifier, logAccess } from '@/lib/data.service';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request) {
+  const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  let requestEmail = 'unknown';
+
   try {
     // Parse and validate request body
     const body = await request.json();
@@ -19,10 +23,21 @@ export async function POST(request) {
     }
 
     const { companyName, email, password, isBgvAgency } = value;
+    requestEmail = email.toLowerCase();
 
     // Check if verifier already exists
-    const existingVerifier = await findVerifierByEmail(email.toLowerCase());
+    const existingVerifier = await findVerifierByEmail(requestEmail);
     if (existingVerifier) {
+      await logAccess({
+        email: requestEmail,
+        role: 'verifier',
+        action: 'REGISTER',
+        status: 'FAILURE',
+        failureReason: 'Account already exists',
+        ipAddress,
+        userAgent
+      });
+
       return NextResponse.json({
         success: false,
         message: 'An account with this email already exists'
@@ -36,30 +51,23 @@ export async function POST(request) {
     // Create new verifier
     const newVerifier = await addVerifier({
       companyName,
-      email: email.toLowerCase(),
+      email: requestEmail,
       password: hashedPassword,
       isEmailVerified: true, // Auto-verify for demo purposes
       isActive: true,
       isBgvAgency: isBgvAgency || false
     });
 
-    // Debug: Log the created verifier
-    console.log('✅ New verifier created:', {
-      id: newVerifier.id,
-      email: newVerifier.email,
-      companyName: newVerifier.companyName
+    // Log success
+    await logAccess({
+      email: requestEmail,
+      role: 'verifier',
+      action: 'REGISTER',
+      status: 'SUCCESS',
+      ipAddress,
+      userAgent,
+      metadata: { companyName, isBgvAgency: !!isBgvAgency }
     });
-
-    // Verify the verifier was actually saved
-    const savedVerifier = await findVerifierByEmail(email.toLowerCase());
-    console.log('🔍 Verification check - Saved verifier found:', savedVerifier ? 'YES' : 'NO');
-    if (savedVerifier) {
-      console.log('Saved verifier details:', {
-        id: savedVerifier.id,
-        email: savedVerifier.email,
-        hasPassword: !!savedVerifier.password
-      });
-    }
 
     // Generate JWT token
     const token = generateToken({
@@ -72,12 +80,12 @@ export async function POST(request) {
 
     // Return response without sensitive data
     const verifierResponse = {
-      id: newVerifier.id,
-      companyName: newVerifier.companyName,
-      email: newVerifier.email,
-      isBgvAgency: newVerifier.isBgvAgency,
-      isEmailVerified: newVerifier.isEmailVerified,
-      createdAt: newVerifier.createdAt
+      id: String(newVerifier.id),
+      companyName: String(newVerifier.companyName),
+      email: String(newVerifier.email),
+      isBgvAgency: !!newVerifier.isBgvAgency,
+      isEmailVerified: !!newVerifier.isEmailVerified,
+      createdAt: newVerifier.createdAt ? newVerifier.createdAt.toISOString() : new Date().toISOString()
     };
 
     // Send welcome email (optional - will fail gracefully if not configured)
@@ -85,7 +93,7 @@ export async function POST(request) {
       const { sendWelcomeEmail } = await import('@/lib/services/emailService');
       await sendWelcomeEmail(newVerifier);
     } catch (emailError) {
-      console.log('Welcome email not sent (email service not configured):', emailError.message);
+      console.log('Welcome email not sent (email service not configured or failed):', emailError.message);
     }
 
     return NextResponse.json({
@@ -99,6 +107,22 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Registration error:', error);
+
+    // Log the actual error to the database for debugging in production
+    try {
+      await logAccess({
+        email: requestEmail,
+        role: 'verifier',
+        action: 'REGISTER',
+        status: 'ERROR',
+        failureReason: error.message || 'Unknown server error',
+        ipAddress,
+        userAgent,
+        metadata: { stack: error.stack }
+      });
+    } catch (logError) {
+      console.error('Failed to log registration error:', logError);
+    }
 
     return NextResponse.json({
       success: false,
