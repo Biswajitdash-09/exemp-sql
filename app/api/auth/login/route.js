@@ -39,7 +39,7 @@ export async function POST(request) {
     if (!verifier) {
       // Log failure (User not found)
       await logAccess({
-        email: normalEmail.toLowerCase(),
+        email: email.toLowerCase(),
         role: 'unknown',
         action: 'LOGIN',
         status: 'FAILURE',
@@ -70,7 +70,7 @@ export async function POST(request) {
     } else {
       // No valid password hash found - reject login
       if (process.env.NODE_ENV === 'development') {
-        console.error('❌ Password is not properly hashed for user:', normalEmail);
+        console.error('❌ Password is not properly hashed for user:', email);
       }
       isPasswordValid = false;
     }
