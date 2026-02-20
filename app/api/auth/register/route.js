@@ -11,15 +11,24 @@ export async function POST(request) {
 
   try {
     // Parse and validate request body
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'Invalid JSON body'
+      }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
     const { error, value } = schemas.verifierRegistration.validate(body);
 
     if (error) {
-      return NextResponse.json({
+      return new Response(JSON.stringify({
         success: false,
         message: 'Validation failed',
         errors: error.details.map(d => ({ field: d.path[0], message: d.message }))
-      }, { status: 400 });
+      }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     const { companyName, email, password, isBgvAgency } = value;
@@ -38,10 +47,10 @@ export async function POST(request) {
         userAgent
       });
 
-      return NextResponse.json({
+      return new Response(JSON.stringify({
         success: false,
         message: 'An account with this email already exists'
-      }, { status: 409 });
+      }), { status: 409, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Hash password before storing
@@ -53,21 +62,25 @@ export async function POST(request) {
       companyName,
       email: requestEmail,
       password: hashedPassword,
-      isEmailVerified: true, // Auto-verify for demo purposes
+      isEmailVerified: true, 
       isActive: true,
       isBgvAgency: isBgvAgency || false
     });
 
     // Log success
-    await logAccess({
-      email: requestEmail,
-      role: 'verifier',
-      action: 'REGISTER',
-      status: 'SUCCESS',
-      ipAddress,
-      userAgent,
-      metadata: { companyName, isBgvAgency: !!isBgvAgency }
-    });
+    try {
+      await logAccess({
+        email: requestEmail,
+        role: 'verifier',
+        action: 'REGISTER',
+        status: 'SUCCESS',
+        ipAddress,
+        userAgent,
+        metadata: { companyName, isBgvAgency: !!isBgvAgency }
+      });
+    } catch (logError) {
+      console.error('Logging failed, but registration succeeded:', logError);
+    }
 
     // Generate JWT token
     const token = generateToken({
@@ -90,20 +103,23 @@ export async function POST(request) {
 
     // Send welcome email (optional - will fail gracefully if not configured)
     try {
-      const { sendWelcomeEmail } = await import('@/lib/services/emailService');
-      await sendWelcomeEmail(newVerifier);
+      // Use dynamic import with extra safety
+      const emailService = await import('@/lib/services/emailService');
+      if (emailService && emailService.sendWelcomeEmail) {
+        await emailService.sendWelcomeEmail(newVerifier);
+      }
     } catch (emailError) {
       console.log('Welcome email not sent (email service not configured or failed):', emailError.message);
     }
 
-    return NextResponse.json({
+    return new Response(JSON.stringify({
       success: true,
       message: 'Verifier registered successfully!',
       data: {
         verifier: verifierResponse,
         token
       }
-    }, { status: 201 });
+    }), { status: 201, headers: { 'Content-Type': 'application/json' } });
 
   } catch (error) {
     console.error('Registration error:', error);
@@ -118,17 +134,17 @@ export async function POST(request) {
         failureReason: error.message || 'Unknown server error',
         ipAddress,
         userAgent,
-        metadata: { stack: error.stack }
+        metadata: { stack: error.toString() } // Use toString() for safety
       });
     } catch (logError) {
       console.error('Failed to log registration error:', logError);
     }
 
-    return NextResponse.json({
+    return new Response(JSON.stringify({
       success: false,
       message: 'Registration failed. Please try again.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    }, { status: 500 });
+    }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
 
