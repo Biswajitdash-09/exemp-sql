@@ -8,22 +8,36 @@ import bcrypt from 'bcryptjs';
 const isTestModeEnabled = process.env.NODE_ENV === 'development' && process.env.ENABLE_TEST_MODE === 'true';
 
 export async function POST(request) {
+  const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  let requestEmail = 'unknown';
+
   try {
     // Parse and validate request body
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'Invalid JSON body'
+      }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
     const { error, value } = schemas.verifierLogin.validate(body);
 
     if (error) {
-      return NextResponse.json({
+      return new Response(JSON.stringify({
         success: false,
         message: 'Validation failed',
         errors: error.details.map(d => ({ field: d.path[0], message: d.message }))
-      }, { status: 400 });
+      }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Normal authentication flow
     const { email: rawEmail, password } = value;
     const email = rawEmail.toLowerCase().trim();
+    requestEmail = email;
 
     // Debug logging only in development
     if (process.env.NODE_ENV === 'development') {
@@ -38,28 +52,32 @@ export async function POST(request) {
 
     if (!verifier) {
       // Log failure (User not found)
-      await logAccess({
-        email: email.toLowerCase(),
-        role: 'unknown',
-        action: 'LOGIN',
-        status: 'FAILURE',
-        failureReason: 'User not found',
-        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      });
+      try {
+        await logAccess({
+          email: email,
+          role: 'unknown',
+          action: 'LOGIN',
+          status: 'FAILURE',
+          failureReason: 'User not found',
+          ipAddress,
+          userAgent
+        });
+      } catch (logError) {
+        console.error('Failed to log login failure (User not found):', logError);
+      }
 
-      return NextResponse.json({
+      return new Response(JSON.stringify({
         success: false,
         message: 'Invalid email or password'
-      }, { status: 401 });
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Check if account is active
     if (!verifier.isActive) {
-      return NextResponse.json({
+      return new Response(JSON.stringify({
         success: false,
         message: 'Your account has been deactivated. Please contact support.'
-      }, { status: 403 });
+      }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Verify password - only bcrypt hashed passwords are supported
@@ -77,20 +95,24 @@ export async function POST(request) {
 
     if (!isPasswordValid) {
       // Log failure (Invalid password)
-      await logAccess({
-        email: verifier.email,
-        role: 'verifier',
-        action: 'LOGIN',
-        status: 'FAILURE',
-        failureReason: 'Invalid password',
-        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown'
-      });
+      try {
+        await logAccess({
+          email: verifier.email,
+          role: 'verifier',
+          action: 'LOGIN',
+          status: 'FAILURE',
+          failureReason: 'Invalid password',
+          ipAddress,
+          userAgent
+        });
+      } catch (logError) {
+        console.error('Failed to log login failure (Invalid password):', logError);
+      }
 
-      return NextResponse.json({
+      return new Response(JSON.stringify({
         success: false,
         message: 'Invalid email or password'
-      }, { status: 401 });
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Update last login time
@@ -99,17 +121,21 @@ export async function POST(request) {
     });
 
     // Log success
-    await logAccess({
-      email: verifier.email,
-      role: 'verifier',
-      action: 'LOGIN',
-      status: 'SUCCESS',
-      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-      userAgent: request.headers.get('user-agent') || 'unknown',
-      metadata: {
-        companyName: verifier.companyName
-      }
-    });
+    try {
+      await logAccess({
+        email: verifier.email,
+        role: 'verifier',
+        action: 'LOGIN',
+        status: 'SUCCESS',
+        ipAddress,
+        userAgent,
+        metadata: {
+          companyName: verifier.companyName
+        }
+      });
+    } catch (logError) {
+      console.error('Failed to log login success:', logError);
+    }
 
     // Generate JWT token
     const token = generateToken({
@@ -121,39 +147,53 @@ export async function POST(request) {
 
     // Return response without sensitive data
     const verifierResponse = {
-      id: verifier.id,
-      companyName: verifier.companyName,
-      email: verifier.email,
-      isEmailVerified: verifier.isEmailVerified,
-      lastLoginAt: updatedVerifier?.lastLoginAt || verifier.lastLoginAt,
-      createdAt: verifier.createdAt
+      id: String(verifier.id),
+      companyName: String(verifier.companyName),
+      email: String(verifier.email),
+      isEmailVerified: !!verifier.isEmailVerified,
+      lastLoginAt: updatedVerifier?.lastLoginAt ? updatedVerifier.lastLoginAt.toISOString() : (verifier.lastLoginAt ? verifier.lastLoginAt.toISOString() : null),
+      createdAt: verifier.createdAt ? verifier.createdAt.toISOString() : new Date().toISOString()
     };
 
-    return NextResponse.json({
+    return new Response(JSON.stringify({
       success: true,
       message: 'Login successful',
       data: {
         verifier: verifierResponse,
         token
       }
-    }, { status: 200 });
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Login error:', error);
+    console.error('Login error:', error);
+
+    // Log the error
+    try {
+      await logAccess({
+        email: requestEmail,
+        role: 'unknown',
+        action: 'LOGIN',
+        status: 'ERROR',
+        failureReason: error.message || 'Unknown server error',
+        metadata: { stack: error.toString() },
+        ipAddress,
+        userAgent
+      });
+    } catch (logError) {
+      console.error('Failed to log login error:', logError);
     }
 
-    return NextResponse.json({
+    return new Response(JSON.stringify({
       success: false,
       message: 'Login failed. Please try again.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    }, { status: 500 });
+    }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
 
 export async function GET() {
-  return NextResponse.json({
+  return new Response(JSON.stringify({
     success: false,
     message: 'Method not allowed'
-  }, { status: 405 });
+  }), { status: 405, headers: { 'Content-Type': 'application/json' } });
 }
