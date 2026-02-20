@@ -1,0 +1,72 @@
+﻿node.exe : ΓÜá Warning: Next.js inferred your 
+workspace root, but it may not be correct.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ΓÜá W 
+   arning: Ne...not be correct.:String) [], Remot  
+  eException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ We detected multiple lockfiles and selected the 
+directory of C:\Users\biswa\OneDrive\Desktop\exemp 
+- SQL\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in 
+your Next.js config, or consider removing one of 
+the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/co
+nfig/next-config-js/turbopack#root-directory for 
+more information.
+ Detected additional lockfiles: 
+   * C:\Users\biswa\OneDrive\Desktop\exemp - SQL\Ex
+-Employee-Verification-Portal\package-lock.json
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+/*! ≡ƒî╝ daisyUI 5.5.18 */
+Γ£ô Compiled successfully in 19.9s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/24) ...
+  Generating static pages using 11 workers (6/24) 
+  Generating static pages using 11 workers (12/24) 
+  Generating static pages using 11 workers (18/24) 
+Γ£ô Generating static pages using 11 workers (24/24) in 778.6ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /admin/appeals/[id]
+Γö£ Γùï /admin/dashboard
+Γö£ Γùï /admin/login
+Γö£ ╞Æ /api/admin/appeals/[id]/respond
+Γö£ ╞Æ /api/admin/dashboard
+Γö£ ╞Æ /api/admin/email-stats
+Γö£ ╞Æ /api/admin/export
+Γö£ ╞Æ /api/admin/login
+Γö£ ╞Æ /api/admin/logs
+Γö£ ╞Æ /api/appeals
+Γö£ ╞Æ /api/auth/login
+Γö£ ╞Æ /api/auth/me
+Γö£ ╞Æ /api/auth/register
+Γö£ ╞Æ /api/auth/send-otp
+Γö£ ╞Æ /api/auth/verify-otp
+Γö£ ╞Æ /api/debug/health-db
+Γö£ ╞Æ /api/debug/health-env
+Γö£ ╞Æ /api/debug/health-simple
+Γö£ ╞Æ /api/reports/generate
+Γö£ ╞Æ /api/verify/request
+Γö£ ╞Æ /api/verify/validate-employee
+Γö£ Γùï /login
+Γö£ Γùï /verify
+Γöö Γùï /verify/success
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
